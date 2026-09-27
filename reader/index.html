@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1b2a3c">
+  <meta name="description" content="按版本阅读原神主线与重要世界支线剧情。">
+  <title>原神剧情编年｜阅读器</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="story-data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body data-theme="day">
+  <div class="shell">
+    <div id="scrim" class="scrim" hidden></div>
+    <aside id="sidebar" class="sidebar" aria-label="阅读目录">
+      <div class="sidebar-head">
+        <div class="brand-mark" aria-hidden="true">✦</div>
+        <div><p class="eyebrow">GENSHIN STORIES</p><strong>原神剧情编年</strong></div>
+        <button id="close-sidebar" class="icon-button mobile-only" type="button" aria-label="关闭目录">×</button>
+      </div>
+      <div class="sidebar-scroll">
+        <section class="side-section">
+          <div class="section-line"><h2>旅途目录</h2><span id="volume-count"></span></div>
+          <p class="side-hint">按版本顺读；未读篇章暂隐标题。</p>
+          <nav id="toc" class="toc" aria-label="版本与幕目录"></nav>
+        </section>
+        <section class="side-section settings">
+          <h2>阅读设置</h2>
+          <div class="setting-row"><span>外观</span><div class="segmented" role="group" aria-label="外观模式"><button id="day-mode" type="button">白天</button><button id="night-mode" type="button">夜晚</button></div></div>
+          <div class="setting-row"><label for="font-size">字号</label><div class="size-control"><button id="font-smaller" type="button" aria-label="缩小字号">−</button><output id="font-size">18</output><button id="font-larger" type="button" aria-label="放大字号">＋</button></div></div>
+          <div class="setting-row"><label for="line-width">行宽</label><input id="line-width" type="range" min="38" max="72" step="2" value="58"><output id="line-width-value">58 字</output></div>
+        </section>
+        <section class="side-section record">
+          <h2>阅读记录</h2>
+          <p id="record-status">尚未开始阅读</p>
+          <div class="record-actions"><button id="resume" type="button">回到上次阅读</button><button id="export-record" type="button">导出记录</button><button id="import-record" type="button">导入记录</button><input id="record-file" type="file" accept="application/json,.json" hidden></div>
+          <p class="side-hint">记录保存在此浏览器。更换设备时可导出并导入。</p>
+        </section>
+      </div>
+      <div class="sidebar-foot">风起之处，故事仍在继续。</div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button id="toggle-sidebar" class="icon-button menu-button" type="button" aria-label="展开或收起目录" aria-expanded="true"><span class="menu-lines" aria-hidden="true"></span></button>
+        <div class="topbar-title"><span class="topbar-kicker">主线与重要支线</span><strong>原神剧情编年</strong></div>
+        <div class="topbar-actions"><span id="header-progress" class="header-progress"></span><button id="theme-toggle" class="icon-button theme-button" type="button" aria-label="切换白天和夜晚模式">☾</button></div>
+      </header>
+
+      <main id="main" class="main" tabindex="-1">
+        <div class="reader-wrap">
+          <div class="reader-topline"><span id="volume-label"></span><span id="page-counter"></span></div>
+          <article id="page" class="page" aria-live="polite">
+            <div class="page-ornament" aria-hidden="true">✧　✦　✧</div>
+            <p id="page-overline" class="page-overline"></p>
+            <h1 id="page-heading"></h1>
+            <p id="volume-heading" class="volume-heading"></p>
+            <div class="title-rule" aria-hidden="true"><span>✦</span></div>
+            <div id="page-content" class="prose"></div>
+            <details id="sources" class="sources" hidden><summary>本版本资料来源</summary><div id="source-content"></div></details>
+            <div class="page-end" aria-hidden="true">✧</div>
+          </article>
+          <nav class="pager" aria-label="翻页">
+            <button id="previous-page" type="button"><span class="pager-arrow" aria-hidden="true">‹</span><span><small>上一页</small><strong id="previous-label">旅途起点</strong></span></button>
+            <div class="pager-middle"><span id="pager-current"></span><span class="pager-tip">键盘 ← → 也可翻页</span></div>
+            <button id="next-page" type="button"><span><small>下一页</small><strong id="next-label">继续旅途</strong></span><span class="pager-arrow" aria-hidden="true">›</span></button>
+          </nav>
+        </div>
+      </main>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+</body>
+</html>

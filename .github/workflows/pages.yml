@@ -1,0 +1,43 @@
+name: Deploy reader to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "story-summaries/**"
+      - "reader/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install markdown-it-py==3.0.0
+      - run: python reader/build.py
+      - run: |
+          mkdir -p site
+          cp reader/index.html reader/style.css reader/app.js reader/story-data.js reader/favicon.svg site/
+          touch site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
