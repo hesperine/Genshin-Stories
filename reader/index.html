@@ -9,6 +9,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <script defer src="story-data.js"></script>
+  <script defer src="reader-state.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body data-theme="day">
@@ -52,6 +53,10 @@
       <main id="main" class="main" tabindex="-1">
         <div class="reader-wrap">
           <div class="reader-topline"><span id="volume-label"></span><span id="page-counter"></span></div>
+          <div class="edition-toolbar">
+            <div class="edition-choice"><span>讲述方式</span><div class="segmented edition-switch" role="group" aria-label="讲述方式"><button id="edition-standard" type="button" aria-pressed="true">普通版</button><button id="edition-epic" type="button" aria-pressed="false" aria-describedby="edition-note">史诗版</button></div></div>
+            <div class="edition-availability"><p id="edition-note"></p><button id="sample-link" type="button" hidden>从史诗序章开始</button></div>
+          </div>
           <article id="page" class="page" aria-live="polite">
             <div class="page-ornament" aria-hidden="true">✧　✦　✧</div>
             <p id="page-overline" class="page-overline"></p>
@@ -59,7 +64,7 @@
             <p id="volume-heading" class="volume-heading"></p>
             <div class="title-rule" aria-hidden="true"><span>✦</span></div>
             <div id="page-content" class="prose"></div>
-            <details id="sources" class="sources" hidden><summary>本版本资料来源</summary><div id="source-content"></div></details>
+            <details id="sources" class="sources" hidden><summary id="sources-label">本版本资料来源</summary><div id="source-content"></div></details>
             <div class="page-end" aria-hidden="true">✧</div>
           </article>
           <nav class="pager" aria-label="翻页">
