@@ -2,9 +2,10 @@
 
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
-from build import make_section, parse_file
+from build import attach_epic_edition, make_section, parse_file
 
 
 class StoryPagesTest(unittest.TestCase):
@@ -57,6 +58,39 @@ class StoryPagesTest(unittest.TestCase):
         long = make_section("v3.0-s1", "须弥", "林" * 801)
         self.assertEqual(short["readingMinutes"], 1)
         self.assertEqual(long["readingMinutes"], 3)
+
+    def test_epic_rewrite_keeps_ordinary_content_and_page_ids(self):
+        volume = self.parse("# 3.0｜须弥\n\n## 第一幕\n\n普通正文。\n\n## 资料\n\n普通资料。\n")
+        original = deepcopy(volume)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "v3.0-s0.md"
+            path.write_text("# 第一幕\n\n史诗正文。\n\n## 资料\n\n史诗资料。\n", encoding="utf-8")
+            self.assertEqual(attach_epic_edition([volume], Path(folder)), 1)
+        epic = volume["sections"][0].pop("editions")["epic"]
+        self.assertIn("史诗正文", epic["html"])
+        self.assertNotIn("史诗资料", epic["html"])
+        self.assertIn("史诗资料", epic["sources"])
+        self.assertEqual(volume, original)
+
+    def test_epic_rewrite_can_target_a_leading_story(self):
+        volume = self.parse("# 3.0｜须弥\n\n主线。\n\n## 世界支线\n\n森林。\n")
+        with tempfile.TemporaryDirectory() as folder:
+            (Path(folder) / "v3.0-sintro.md").write_text("# 须弥\n\n史诗主线。\n", encoding="utf-8")
+            attach_epic_edition([volume], Path(folder))
+        self.assertIn("epic", volume["sections"][0]["editions"])
+        self.assertNotIn("editions", volume["sections"][1])
+
+    def test_unmatched_or_incomplete_rewrites_fail_the_build(self):
+        for name, content in [
+            ("v3.0-s9.md", "# 须弥\n\n正文。\n"),
+            ("v3.0-s0.md", "# 错误标题\n\n正文。\n"),
+            ("v3.0-s0.md", "# 须弥\n\n## 第一幕\n\n正文。\n"),
+            ("v3.0-s0.md", "# 须弥\n"),
+        ]:
+            with self.subTest(name=name, content=content), tempfile.TemporaryDirectory() as folder:
+                (Path(folder) / name).write_text(content, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    attach_epic_edition([self.parse("# 3.0｜须弥\n\n普通正文。\n")], Path(folder))
 
 
 if __name__ == "__main__":

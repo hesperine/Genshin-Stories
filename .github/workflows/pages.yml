@@ -5,6 +5,7 @@ on:
     branches: [main, master]
     paths:
       - "story-summaries/**"
+      - "story-editions/**"
       - "reader/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -33,7 +34,7 @@ jobs:
       - run: python reader/build.py
       - run: |
           mkdir -p site
-          cp reader/index.html reader/style.css reader/app.js reader/story-data.js reader/favicon.svg site/
+          cp reader/index.html reader/style.css reader/app.js reader/reader-state.js reader/story-data.js reader/favicon.svg site/
           touch site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

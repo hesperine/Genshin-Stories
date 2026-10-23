@@ -13,8 +13,10 @@ from markdown_it import MarkdownIt
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "story-summaries"
+EPIC_SOURCE = ROOT / "story-editions" / "epic"
 OUTPUT = Path(__file__).resolve().parent / "story-data.js"
 VERSION_FILE = re.compile(r"^(\d+)\.(\d+)(?:-(.*))?\.md$")
+EDITION_FILE = re.compile(r"^v(\d+)\.(\d+)-s(intro|\d+)\.md$")
 GROUP_DIR = re.compile(r"^\d+\.x$")
 H2 = re.compile(r"(?m)^##\s+(.+?)\s*$")
 H1 = re.compile(r"(?m)^#\s+(.+?)\s*$")
@@ -88,6 +90,36 @@ def parse_file(path: Path, major: int, minor: int) -> dict:
     }
 
 
+def attach_epic_edition(volumes: list[dict], source: Path = EPIC_SOURCE) -> int:
+    """Attach each rewrite to its existing page without changing the ordinary edition."""
+    if not source.is_dir():
+        return 0
+    pages = {section["id"]: section for volume in volumes for section in volume["sections"]}
+    count = 0
+    for path in sorted(source.glob("*.md")):
+        match = EDITION_FILE.fullmatch(path.name)
+        if not match or path.stem not in pages:
+            raise ValueError(f"史诗文稿没有对应的普通版页面：{path.name}")
+        volume = parse_file(path, int(match[1]), int(match[2]))
+        page = pages[path.stem]
+        if (
+            len(volume["sections"]) != 1
+            or volume["title"] != page["title"]
+            or volume["sections"][0]["title"] != page["title"]
+        ):
+            raise ValueError(f"史诗文稿须为单页，且标题与普通版一致：{path.name}")
+        section = volume["sections"][0]
+        if not re.sub(r"<[^>]+>", "", section["html"]).strip():
+            raise ValueError(f"史诗文稿正文为空：{path.name}")
+        page.setdefault("editions", {})["epic"] = {
+            "html": section["html"],
+            "readingMinutes": section["readingMinutes"],
+            "sources": volume["sources"],
+        }
+        count += 1
+    return count
+
+
 def build() -> None:
     if not SOURCE.is_dir():
         raise SystemExit(f"找不到剧情文档目录：{SOURCE}")
@@ -111,11 +143,12 @@ def build() -> None:
         raise SystemExit("发现重复版本号，请检查 Markdown 文件名")
 
     volumes = [parse_file(path, major, minor) for major, minor, path in found]
+    epic_count = attach_epic_edition(volumes)
     data = {"schema": 1, "volumes": volumes}
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     payload = payload.replace("<", "\\u003c").replace(">", "\\u003e")
     OUTPUT.write_text("window.GENSHIN_STORY = " + payload + ";\n", encoding="utf-8")
-    print(f"已生成 {OUTPUT.name}：{len(volumes)} 个版本，{sum(len(v['sections']) for v in volumes)} 页")
+    print(f"已生成 {OUTPUT.name}：{len(volumes)} 个版本，{sum(len(v['sections']) for v in volumes)} 页，{epic_count} 页史诗版")
 
 
 if __name__ == "__main__":
