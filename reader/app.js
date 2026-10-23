@@ -57,11 +57,11 @@
   function hasReadVolume(volume) { return volume.sections.some(section => visited.has(section.id)); }
   function isMobile() { return matchMedia("(max-width: 800px)").matches; }
   function routeId() {
-    const match = /^#v=(\d+\.\d+)&s=(\d+)$/.exec(location.hash);
+    const match = /^#v=(\d+\.\d+)&s=(intro|\d+)$/.exec(location.hash);
     return match ? `v${match[1]}-s${match[2]}` : null;
   }
   function hashFor(id) {
-    const match = /^v(\d+\.\d+)-s(\d+)$/.exec(id);
+    const match = /^v(\d+\.\d+)-s(intro|\d+)$/.exec(id);
     return match ? `#v=${match[1]}&s=${match[2]}` : "";
   }
   function toast(message) {
@@ -135,9 +135,11 @@
     expandedGroups.add(volume.major);
     save();
 
-    els.overline.textContent = `版本 ${volume.version}　·　${volume.chapter}`;
+    const readingTime = section.readingMinutes ? `　·　约 ${section.readingMinutes} 分钟` : "";
+    els.overline.textContent = `版本 ${volume.version}${readingTime}`;
     els.heading.textContent = section.title;
     els.volumeHeading.textContent = volume.title;
+    els.volumeHeading.hidden = section.title === volume.title;
     els.content.innerHTML = section.html;
     els.volumeLabel.textContent = `${volume.major}.x / ${volume.version}`;
     els.pageCounter.textContent = `第 ${sectionIndex + 1} / ${volume.sections.length} 节`;

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
 import re
+from html import unescape
 from pathlib import Path
 
 from markdown_it import MarkdownIt
@@ -17,6 +19,7 @@ GROUP_DIR = re.compile(r"^\d+\.x$")
 H2 = re.compile(r"(?m)^##\s+(.+?)\s*$")
 H1 = re.compile(r"(?m)^#\s+(.+?)\s*$")
 MARKDOWN = MarkdownIt("commonmark", {"html": False})
+SOURCE_HEADINGS = {"资料", "资料来源", "参考资料"}
 
 
 def title_kind(heading: str) -> str:
@@ -25,6 +28,19 @@ def title_kind(heading: str) -> str:
     if "悬而未决" in heading:
         return "question"
     return "chapter"
+
+
+def make_section(section_id: str, heading: str, body: str) -> dict:
+    rendered = MARKDOWN.render(body)
+    text = unescape(re.sub(r"<[^>]+>", "", rendered))
+    words = re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]|[A-Za-z0-9]+", text)
+    return {
+        "id": section_id,
+        "title": heading,
+        "kind": title_kind(heading),
+        "html": rendered,
+        "readingMinutes": max(1, math.ceil(len(words) / 400)),
+    }
 
 
 def parse_file(path: Path, major: int, minor: int) -> dict:
@@ -43,27 +59,20 @@ def parse_file(path: Path, major: int, minor: int) -> dict:
         end = matches[index + 1].start() if index + 1 < len(matches) else len(source)
         heading = match.group(1).strip()
         body = source[match.end() : end].strip()
-        if heading in ("资料", "资料来源", "参考资料"):
+        if heading in SOURCE_HEADINGS:
             sources = MARKDOWN.render(body)
             continue
-        if not sections and preamble.strip():
-            body = preamble.strip() + "\n\n" + body
         sections.append(
-            {
-                "id": f"v{major}.{minor}-s{len(sections)}",
-                "title": heading,
-                "kind": title_kind(heading),
-                "html": MARKDOWN.render(body),
-            }
+            make_section(f"v{major}.{minor}-s{len(sections)}", heading, body)
         )
-    if not sections:
+    if sections and preamble.strip():
+        # Keep existing numbered sections stable when a leading story becomes its own page.
+        sections.insert(
+            0, make_section(f"v{major}.{minor}-sintro", title, preamble.strip())
+        )
+    elif not sections:
         sections.append(
-            {
-                "id": f"v{major}.{minor}-s0",
-                "title": "本版纪事",
-                "kind": "chapter",
-                "html": MARKDOWN.render(preamble.strip()),
-            }
+            make_section(f"v{major}.{minor}-s0", title, preamble.strip())
         )
 
     file_parts = path.stem.split("-", 2)
